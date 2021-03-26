@@ -22,7 +22,29 @@ module.exports = function (app, swig) {
         "rol": "Batería"
     }];
 
-    let roles = ["Cantante", "Batería", "Guitarrista","Bajista","Teclista"];
+    let roles = ["Cantante", "Batería", "Guitarrista", "Bajista", "Teclista"];
+
+    /*
+    Ejercicio 3 – Implementar en rautores.js un método autores/filtrar que recibirá como
+parámetro uno de posibles roles (ejemplo: autores/filtrar/cantante) y mostrará en
+pantalla solo los autores que tengan ese rol. Obviamente, los autores estarán
+predefinidos en un array. Si no se implementó la funcionalidad anterior, puede realizarse
+con el género de las canciones creado durante la práctica. 20%.
+     */
+    app.get('/autores/filtrar', function (req, res) {
+        let autoresFiltrados  = [];
+
+        for (i = 0; i < autores.length; i++) {
+            if (autores[i].rol === (req.query.rol)){
+                autoresFiltrados.push(autores[i]);
+            }
+            // console.log(numbers[i]);
+        }
+
+        let respuesta = swig.renderFile('views/autores.html',{autores:autoresFiltrados});
+        res.send(respuesta);
+    });
+
 
     /*    a. autores/agregar: Mostrar un formulario (vista: autores-agregar.html) que
         permita añadir autores con los siguientes parámetros: nombre, grupo y rol
@@ -32,7 +54,7 @@ module.exports = function (app, swig) {
 
         let respuesta = swig.renderFile('views/autores-agregar.html', {
             vendedor: 'Tienda de canciones',
-            roles : roles
+            roles: roles
         });
         res.send(respuesta);
     });
