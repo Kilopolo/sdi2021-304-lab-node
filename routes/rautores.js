@@ -22,12 +22,18 @@ module.exports = function (app, swig) {
         "rol": "Batería"
     }];
 
+    let roles = ["Cantante", "Batería", "Guitarrista","Bajista","Teclista"];
+
     /*    a. autores/agregar: Mostrar un formulario (vista: autores-agregar.html) que
         permita añadir autores con los siguientes parámetros: nombre, grupo y rol
         (posibles valores: cantante, batería, guitarrista, bajista o teclista). 20%.*/
 
     app.get('/autores/agregar', function (req, res) {
-        let respuesta = swig.renderFile('views/autores-agregar.html', {});
+
+        let respuesta = swig.renderFile('views/autores-agregar.html', {
+            vendedor: 'Tienda de canciones',
+            roles : roles
+        });
         res.send(respuesta);
     });
 
