@@ -1,4 +1,4 @@
-module.exports = function (app, swig, mongo) {
+module.exports = function (app, swig, gestorBD) {
 
     /*
     Nota: el método GET /canciones/agregar tiene que ir antes de /canciones/:id. El
@@ -60,22 +60,31 @@ module.exports = function (app, swig, mongo) {
             genero: req.body.genero,
             precio: req.body.precio
         }
-        // Conectarse
-        mongo.MongoClient.connect(app.get('db'), function (err, db) {
-            if (err) {
-                res.send("Error de conexión: " + err);
+// Conectarse
+        gestorBD.insertarCancion(cancion, function (id) {
+            if (id == null) {
+                res.send("Error al insertar canción");
             } else {
-                let collection = db.collection('canciones');
-                collection.insertOne(cancion, function (err, result) {
-                    if (err) {
-                        res.send("Error al insertar " + err);
-                    } else {
-                        res.send("Agregada id: " + result.ops[0]._id);
-                    }
-                    db.close();
-                });
+                res.send("Agregada la canción ID: " + id);
             }
         });
+
+        // Conectarse
+        // mongo.MongoClient.connect(app.get('db'), function (err, db) {
+        //     if (err) {
+        //         res.send("Error de conexión: " + err);
+        //     } else {
+        //         let collection = db.collection('canciones');
+        //         collection.insertOne(cancion, function (err, result) {
+        //             if (err) {
+        //                 res.send("Error al insertar " + err);
+        //             } else {
+        //                 res.send("Agregada id: " + result.ops[0]._id);
+        //             }
+        //             db.close();
+        //         });
+        //     }
+        // });
 
         // res.send("Canción agregada:" + req.body.nombre + "<br>"
         //     + " genero" + req.body.genero + "<br>"
