@@ -2,6 +2,9 @@
 let express = require('express');
 let app = express();
 
+let fileUpload = require('express-fileupload');
+app.use(fileUpload());
+
 let mongo = require('mongodb');
 //, declaramos la ruta public como estática en app.js
 app.use(express.static('public'));

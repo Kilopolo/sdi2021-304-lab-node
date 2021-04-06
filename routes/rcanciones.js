@@ -65,10 +65,48 @@ module.exports = function (app, swig, gestorBD) {
             if (id == null) {
                 res.send("Error al insertar canción");
             } else {
-                res.send("Agregada la canción ID: " + id);
+                //borrar la línea res.send() porque no se puede seguir procesando la
+                // petición una vez se ha enviado la respuesta.
+                // res.send("Agregada la canción ID: " + id);
+                //La respuesta se enviará una vez
+                // que se complete la subida de los ficheros
+                // if (req.files.portada != null) {
+                //     var imagen = req.files.portada;
+                //     imagen.mv('public/portadas/' + id + '.png', function(err) {
+                //         if (err) {
+                //             res.send("Error al subir la portada");
+                //         } else {
+                //             res.send("Agregada id: " + id);
+                //         }
+                //     });
+                // }
+                if (req.files.audio != null) {
+                    let audio = req.files.audio;
+                    audio.mv('public/audios/'+id+'.mp3', function(err) {
+                        if (err) {
+                            res.send("Error al subir el audio");
+                        } else {
+                            res.send("Agregada id: "+ id);
+                        }
+                    });
+                }
             }
-        });
 
+        });
+        app.get('/cancion/:id', function (req, res) {
+            let criterio = { "_id" : gestorBD.mongo.ObjectID(req.params.id)  };
+            gestorBD.obtenerCanciones(criterio,function(canciones){
+                if ( canciones == null ){
+                    res.send("Error al recuperar la canción.");
+                } else {
+                    let respuesta = swig.renderFile('views/bcancion.html',
+                        {
+                            cancion : canciones[0]
+                        });
+                    res.send(respuesta);
+                }
+            });
+        });
         // Conectarse
         // mongo.MongoClient.connect(app.get('db'), function (err, db) {
         //     if (err) {
@@ -89,6 +127,23 @@ module.exports = function (app, swig, gestorBD) {
         // res.send("Canción agregada:" + req.body.nombre + "<br>"
         //     + " genero" + req.body.genero + "<br>"
         //     + " precio: " + req.body.precio);
+    });
+    app.get("/tienda", function(req, res) {
+        let criterio = {};
+        if( req.query.busqueda != null ){
+            criterio = { "nombre" :  {$regex : ".*"+req.query.busqueda+".*"} };
+        }
+        gestorBD.obtenerCanciones( criterio,function(canciones) {
+            if (canciones == null) {
+                res.send("Error al listar ");
+            } else {
+                let respuesta = swig.renderFile('views/btienda.html',
+                    {
+                        canciones : canciones
+                    });
+                res.send(respuesta);
+            }
+        });
     });
 
     app.get('/promo*', function (req, res) {
