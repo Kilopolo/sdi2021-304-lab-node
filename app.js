@@ -2,6 +2,15 @@
 let express = require('express');
 let app = express();
 
+let expressSession = require('express-session');
+app.use(expressSession({
+    secret: 'abcdefg',
+    resave: true,
+    saveUninitialized: true
+}));
+
+let crypto = require('crypto');
+
 let fileUpload = require('express-fileupload');
 app.use(fileUpload());
 
@@ -30,7 +39,8 @@ app.set('db', 'mongodb://admin:sdi@tiendamusica-shard-00-00.any5v.mongodb.net:27
     '&authSource=admin' +
     '&retryWrites=true' +
     '&w=majority');
-
+app.set('clave','abcdefg');
+app.set('crypto',crypto);
 
 //Rutas/controladores por lógica
 require("./routes/rusuarios.js")(app, swig, gestorBD); // (app, param1, param2, etc.)
