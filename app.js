@@ -2,6 +2,8 @@
 let express = require('express');
 let app = express();
 
+// var expressSession = require('express-session');
+
 let expressSession = require('express-session');
 app.use(expressSession({
     secret: 'abcdefg',
@@ -25,6 +27,43 @@ app.use(bodyParser.urlencoded({extended: true}));
 // gestorDB.init
 let gestorBD = require("./modules/gestorBD.js");
 gestorBD.init(app,mongo);
+
+// routerUsuarioSession
+var routerUsuarioSession = express.Router();
+routerUsuarioSession.use(function(req, res, next) {
+    console.log("routerUsuarioSession");
+    if ( req.session.usuario ) {
+// dejamos correr la petición
+        next();
+    } else {
+        console.log("va a : "+req.session.destino)
+        res.redirect("/identificarse");
+    }
+});
+//Aplicar routerUsuarioSession
+app.use("/canciones/agregar",routerUsuarioSession);
+app.use("/publicaciones",routerUsuarioSession);
+// app.use("/audios/",routerUsuarioSession);
+
+//routerAudios
+let routerAudios = express.Router();
+routerAudios.use(function(req, res, next) {
+    console.log("routerAudios");
+    let path = require('path');
+    let idCancion = path.basename(req.originalUrl, '.mp3');
+    gestorBD.obtenerCanciones(
+        {"_id": mongo.ObjectID(idCancion) }, function (canciones) {
+            if(req.session.usuario && canciones[0].autor == req.session.usuario ){
+                next();
+            } else {
+                res.redirect("/tienda");
+            }
+        })
+});
+//Aplicar routerAudios
+app.use("/audios/",routerAudios);
+
+app.use(express.static('public'));
 
 // incluir el motor de plantillas en la aplicación
 let swig = require('swig');
