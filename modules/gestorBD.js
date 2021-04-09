@@ -5,6 +5,45 @@ module.exports = {
         this.mongo = mongo;
         this.app = app;
     },
+    //Deben crearse en el gestorBD.js los métodos necesarios tanto para añadir
+    // comentarios como para obtener un listado de comentarios.
+    obtenerListadoComentariosCancion : function(criterio,funcionCallback){
+        this.mongo.MongoClient.connect(this.app.get('db'), function(err, db) {
+            if (err) {
+                funcionCallback(null);
+            } else {
+                let collection = db.collection('comentarios');
+                collection.find(criterio).toArray(function(err, comentarios) {
+                    // collection.find().toArray(function(err, canciones) {
+                    if (err) {
+                        funcionCallback(null);
+                    } else {
+                        funcionCallback(comentarios);
+                    }
+                    db.close();
+                });
+            }
+        });
+    },
+    agregarComentariosCancion : function(comentario, funcionCallback) {
+        this.mongo.MongoClient.connect(this.app.get('db'), function(err, db) {
+            if (err) {
+                funcionCallback(null);
+            } else {
+                let collection = db.collection('comentarios');
+
+                collection.insertOne(comentario, function(err, result) {
+                    if (err) {
+                        funcionCallback(null);
+                    } else {
+                        funcionCallback(result.ops[0]._id);
+                    }
+                    db.close();
+                });
+            }
+        });
+    },
+    //---------------
     obtenerUsuarios : function(criterio,funcionCallback){
         this.mongo.MongoClient.connect(this.app.get('db'), function(err, db) {
             if (err) {

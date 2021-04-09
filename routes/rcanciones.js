@@ -121,6 +121,28 @@ module.exports = function (app, swig, gestorBD) {
         res.send(respuesta);
     });
 
+    app.get('/cancion/:id', function (req, res) {
+        let criterio = {"_id": gestorBD.mongo.ObjectID(req.params.id)};
+        gestorBD.obtenerCanciones(criterio, function (canciones) {
+            if (canciones == null) {
+                res.send("Error al recuperar la canción.");
+            } else {
+                let criterio2 = {"cancion_id": gestorBD.mongo.ObjectID(req.params.id)};
+                gestorBD.obtenerListadoComentariosCancion(criterio2, function (comentarios) {
+                    if (comentarios == null) {
+                        res.send("Error al recuperar el listado de comentarios.");
+                    } else {
+                        let respuesta = swig.renderFile('views/bcancion.html',
+                            {
+                                cancion: canciones[0],
+                                comentarios: comentarios
+                            });
+                        res.send(respuesta);
+                    }
+                });
+            }
+        });
+    });
     //procese los atributos nombre, género y
     // precio enviados a través del formulario.
     app.post("/cancion", function (req, res) {
@@ -170,20 +192,6 @@ module.exports = function (app, swig, gestorBD) {
 
         });
 
-        app.get('/cancion/:id', function (req, res) {
-            let criterio = {"_id": gestorBD.mongo.ObjectID(req.params.id)};
-            gestorBD.obtenerCanciones(criterio, function (canciones) {
-                if (canciones == null) {
-                    res.send("Error al recuperar la canción.");
-                } else {
-                    let respuesta = swig.renderFile('views/bcancion.html',
-                        {
-                            cancion: canciones[0]
-                        });
-                    res.send(respuesta);
-                }
-            });
-        });
         // Conectarse
         // mongo.MongoClient.connect(app.get('db'), function (err, db) {
         //     if (err) {
@@ -225,6 +233,6 @@ module.exports = function (app, swig, gestorBD) {
 
     app.get('/promo*', function (req, res) {
         res.send('Respuesta patrón promo* ');
-    })
+    });
 
 };
