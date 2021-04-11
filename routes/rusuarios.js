@@ -38,7 +38,8 @@ module.exports = function(app,swig, gestorBD) {
                 res.send("No identificado: ");
             } else {
                 req.session.usuario = usuarios[0].email;
-                res.send("identificado");
+                // res.send("identificado");
+                res.redirect("/publicaciones");
             }
         });
     });
@@ -58,7 +59,8 @@ module.exports = function(app,swig, gestorBD) {
             if (id == null){
                 res.send("Error al insertar el usuario");
             } else {
-                res.send('Usuario Insertado ' + id);
+                // res.send('Usuario Insertado ' + id);
+                res.redirect("/publicaciones");
             }
         });
     });
