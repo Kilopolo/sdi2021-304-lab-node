@@ -80,7 +80,7 @@ module.exports = {
     // comentarios como para obtener un listado de comentarios.
     obtenerListadoComentariosCancion: function (criterio, funcionCallback) {
         this.mongo.MongoClient.connect(this.app.get('db'), function (err, db) {
-            if (err) {
+                if (err) {
                 funcionCallback(null);
             } else {
                 let collection = db.collection('comentarios');
@@ -180,6 +180,7 @@ module.exports = {
                         funcionCallback(canciones);
                     }
                     db.close();
+
                 });
             }
         });
