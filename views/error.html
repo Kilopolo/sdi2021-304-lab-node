@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block titulo %} Detalles {{ cancion.nombre }}  {% endblock %}
+
+{% block contenido_principal %}
+<div class="row">
+    <div class="media col-xs-10">
+        <div class="media-left media-middle">
+            <h1>ERROR</h1>
+            <p>{{ mensaje }}</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
