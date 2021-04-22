@@ -367,6 +367,7 @@ module.exports = function (app, swig, gestorBD) {
                 res.send(respuesta);
             }
         });
+
         // gestorBD.obtenerCanciones(criterio, function (canciones) {
         //     if (canciones == null) {
         //         res.send("Error al listar ");
