@@ -36,7 +36,7 @@ module.exports = function(app, gestorBD) {
             }
         });
     });
-    
+
     app.put("/api/cancion/:id", function(req, res) {
         let criterio = { "_id" : gestorBD.mongo.ObjectID(req.params.id) };
         let cancion = {}; // Solo los atributos a modificar
