@@ -37,10 +37,9 @@ public class Ventana {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				peticiones++;
-				ActualizarMemoriaThread hilo = new
-				ActualizarMemoriaThread(Ventana.this);
+				ActualizarMemoriaThread hilo = new ActualizarMemoriaThread(Ventana.this);
 				hilo.start();
-				
+
 			}
 		});
 		panel.add(botonActualizar);
@@ -63,8 +62,12 @@ public class Ventana {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
 	}
-	
+
 	public void actualizarMemoria(String memoria) {
-		textoMemoria.setText("Memoria libre: "+memoria +" ("+peticiones+")");
-		}
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				textoMemoria.setText("Memoria libre: " + memoria + " (" + peticiones + ")");
+			}
+		});
+	}
 }

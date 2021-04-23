@@ -15,20 +15,21 @@ module.exports = function (app, gestorBD) {
     });
 
     function cancionValida(cancion) {
-        if(cancion.nombre == null)
+        if (cancion.nombre == null)
             return false
-        if(cancion.genero == null)
+        if (cancion.genero == null)
             return false
-        if(cancion.precio == null)
+        if (cancion.precio == null)
             return false
         // precio positivo, que el título tenga una longitud
         // mínima o máxima, etcétera.
         if (cancion.nombre.length > 25 || cancion.nombre.length < 3)
             return false
-        if(cancion.precio <= 0)
+        if (cancion.precio <= 0)
             return false
 
     }
+
     function validaDatosCancion(cancion, funcionCallback) {
         let errors = new Array();
         if (cancion.nombre === null || typeof cancion.nombre === 'undefined' ||
@@ -64,7 +65,7 @@ module.exports = function (app, gestorBD) {
         //     })
         // }
 
-        validaDatosCancion (cancion, function(errors){
+        validaDatosCancion(cancion, function (errors) {
             if (errors !== null && errors.length > 0) {
                 res.status(403);
                 res.json({
@@ -86,18 +87,22 @@ module.exports = function (app, gestorBD) {
                     }
                 });
             }
-        })
+        });
 
     });
 
-    function usuarioAutenticado(req, res) {
-        let usuario = req.usuario.session ;
-        if(usuario == null)
-            return false;
-    }
 
-    function usuarioEsDuenyoDeLaCancion(cancion) {
-        return false;
+    function usuarioEsDuenyoDeLaCancion(usuario, cancion, funcionCallback) {
+        let errors = new Array();
+        if (usuario == null)
+            errors.push("El usuario no esta autenticado")
+        if (cancion != null)
+            errors.push("El usuario no es el dueño de la cancion")
+
+        if (errors.length <= 0)
+            funcionCallback(null)
+        else
+            funcionCallback(errors)
     }
 
     app.put("/api/cancion/:id", function (req, res) {
@@ -110,35 +115,52 @@ module.exports = function (app, gestorBD) {
         if (req.body.precio != null)
             cancion.precio = req.body.precio;
 
-        if(!usuarioAutenticado(req,res)){
-            res.status(500);
-            res.json({
-                error: "el usuario no esta autenticado"
-            })
-        }
-
-        if(!usuarioEsDuenyoDeLaCancion(cancion)){
-            res.status(500);
-            res.json({
-                error: "el usuario no es el dueño de la cancion"
-            })
-        }
-
-
-        gestorBD.modificarCancion(criterio, cancion, function (result) {
-            if (result == null) {
-                res.status(500);
+        validaDatosCancion(cancion, function (errorsValidaCancion) {
+            if (errorsValidaCancion !== null && errorsValidaCancion.length > 0) {
+                res.status(403);
                 res.json({
-                    error: "se ha producido un error"
+                    errores: errorsValidaCancion
                 })
             } else {
-                res.status(200);
-                res.json({
-                    mensaje: "canción modificada",
-                    _id: req.params.id
-                })
+
+                let criterioUsuario = {"autor": req.session.usuario, "_id": gestorBD.mongo.ObjectID(req.params.id)};
+                gestorBD.obtenerCompras(criterioUsuario, function (compras) {
+                    usuarioEsDuenyoDeLaCancion(res.usuario, compras[0], function (errors) {
+                        if (errors !== null && errors.length > 0) {
+                            res.status(403);
+                            res.json({
+                                errores: errors
+                            })
+                        } else {
+                            //Si no hay errores
+                            gestorBD.modificarCancion(criterio, cancion, function (result) {
+                                if (result == null) {
+                                    res.status(500);
+                                    res.json({
+                                        error: "se ha producido un error"
+                                    })
+                                } else {
+                                    res.status(200);
+                                    res.json({
+                                        mensaje: "canción modificada",
+                                        _id: req.params.id
+                                    })
+                                }
+                            });
+                        }
+                    });
+
+                });
+
+
             }
         });
+
+
+
+
+
+
     });
     app.get("/api/cancion/:id", function (req, res) {
         let criterio = {"_id": gestorBD.mongo.ObjectID(req.params.id)}
@@ -157,32 +179,31 @@ module.exports = function (app, gestorBD) {
     app.delete("/api/cancion/:id", function (req, res) {
         let criterio = {"_id": gestorBD.mongo.ObjectID(req.params.id)}
 
+        let criterioUsuario = {"autor": req.session.usuario, "_id": gestorBD.mongo.ObjectID(req.params.id)};
+        gestorBD.obtenerCompras(criterioUsuario, function (compras) {
+            usuarioEsDuenyoDeLaCancion(res.usuario, compras[0], function (errors) {
+                if (errors !== null && errors.length > 0) {
+                    res.status(403);
+                    res.json({
+                        errores: errors
+                    })
+                } else {
+                    //Si no hay errores
+                    gestorBD.eliminarCancion(criterio, function (canciones) {
+                        if (canciones == null) {
+                            res.status(500);
+                            res.json({
+                                error: "se ha producido un error"
+                            })
+                        } else {
+                            res.status(200);
+                            res.send(JSON.stringify(canciones));
+                        }
+                    });
+                }
+            });
 
-        if(!usuarioAutenticado(req,res)){
-            res.status(500);
-            res.json({
-                error: "el usuario no esta autenticado"
-            })
-        }
 
-        if(!usuarioEsDuenyoDeLaCancion(cancion)){
-            res.status(500);
-            res.json({
-                error: "el usuario no es el dueño de la cancion"
-            })
-        }
-
-
-        gestorBD.eliminarCancion(criterio, function (canciones) {
-            if (canciones == null) {
-                res.status(500);
-                res.json({
-                    error: "se ha producido un error"
-                })
-            } else {
-                res.status(200);
-                res.send(JSON.stringify(canciones));
-            }
         });
     });
 }
