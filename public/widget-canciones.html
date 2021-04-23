@@ -132,6 +132,7 @@
 //         });
 //         actualizarTabla(canciones);
     }
+    var generoDsc = true;
     function ordenarPorGenero() {
         if (generoDsc) {
             canciones.sort(function (a, b) {
@@ -150,14 +151,26 @@
         generoDsc = !generoDsc; //invertir
 
     }
+    var nombreDsc = true;
     function ordenarPorNombre() {
-        canciones.sort(function (a, b) {
-            if (a.nombre > b.nombre) return 1;
-            if (a.nombre < b.nombre) return -1;
-            return 0;
-        });
+
+        if (nombreDsc) {
+            canciones.sort(function (a, b) {
+                if (a.nombre > b.nombre) return 1;
+                if (a.nombre < b.nombre) return -1;
+                return 0;
+            });
+        } else {
+            canciones.sort(function (a, b) {
+                if (a.nombre < b.nombre) return 1;
+                if (a.nombre > b.nombre) return -1;
+                return 0;
+            });
+        }
         actualizarTabla(canciones);
+        nombreDsc = !nombreDsc; //invertir
+
     }
 </script>
-}
+
 </html>
