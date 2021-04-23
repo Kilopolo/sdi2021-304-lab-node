@@ -1,8 +1,12 @@
 // Módulos
 let express = require('express');
 let app = express();
+//Este cliente va a utilizar el servicio web REST https://www.freeforexapi.com/ que permite hacer
+// transformaciones de divisas.
+let rest = require('request');
+app.set('rest', rest);
 
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Credentials", "true");
     res.header("Access-Control-Allow-Methods", "POST, GET, DELETE, UPDATE, PUT");
@@ -12,7 +16,7 @@ app.use(function(req, res, next) {
 });
 
 let jwt = require('jsonwebtoken');
-app.set('jwt',jwt);
+app.set('jwt', jwt);
 
 let fs = require('fs');
 let https = require('https');
@@ -41,16 +45,16 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 // routerUsuarioToken
 let routerUsuarioToken = express.Router();
-routerUsuarioToken.use(function(req, res, next) {
+routerUsuarioToken.use(function (req, res, next) {
 // obtener el token, vía headers (opcionalmente GET y/o POST).
     let token = req.headers['token'] || req.body.token || req.query.token;
     if (token != null) {
 // verificar el token
-        jwt.verify(token, 'secreto', function(err, infoToken) {
-            if (err || (Date.now()/1000 - infoToken.tiempo) > 240 ){
+        jwt.verify(token, 'secreto', function (err, infoToken) {
+            if (err || (Date.now() / 1000 - infoToken.tiempo) > 240) {
                 res.status(403); // Forbidden
                 res.json({
-                    acceso : false,
+                    acceso: false,
                     error: 'Token invalido o caducado'
                 });
 // También podríamos comprobar que intoToken.usuario existe
@@ -64,7 +68,7 @@ routerUsuarioToken.use(function(req, res, next) {
     } else {
         res.status(403); // Forbidden
         res.json({
-            acceso : false,
+            acceso: false,
             mensaje: 'No hay Token'
         });
     }
@@ -75,39 +79,39 @@ app.use('/api/cancion', routerUsuarioToken);
 //La variable mongo debe inicializarse ANTES de llamar a
 // gestorDB.init
 let gestorBD = require("./modules/gestorBD.js");
-gestorBD.init(app,mongo);
+gestorBD.init(app, mongo);
 
 // routerUsuarioSession
 var routerUsuarioSession = express.Router();
-routerUsuarioSession.use(function(req, res, next) {
+routerUsuarioSession.use(function (req, res, next) {
     console.log("routerUsuarioSession");
-    if ( req.session.usuario ) {
+    if (req.session.usuario) {
 // dejamos correr la petición
         next();
     } else {
-        console.log("va a : "+req.session.destino)
+        console.log("va a : " + req.session.destino)
         res.redirect("/identificarse");
     }
 });
 //Aplicar routerUsuarioSession
-app.use("/canciones/agregar",routerUsuarioSession);
-app.use("/publicaciones",routerUsuarioSession);
-app.use("/cancion/comprar",routerUsuarioSession);
-app.use("/compras",routerUsuarioSession);
+app.use("/canciones/agregar", routerUsuarioSession);
+app.use("/publicaciones", routerUsuarioSession);
+app.use("/cancion/comprar", routerUsuarioSession);
+app.use("/compras", routerUsuarioSession);
 // app.use("/audios/",routerUsuarioSession);
 
 //routerUsuarioAutor
 let routerUsuarioAutor = express.Router();
-routerUsuarioAutor.use(function(req, res, next) {
+routerUsuarioAutor.use(function (req, res, next) {
     console.log("routerUsuarioAutor");
     let path = require('path');
     let id = path.basename(req.originalUrl);
 // Cuidado porque req.params no funciona
 // en el router si los params van en la URL.
     gestorBD.obtenerCanciones(
-        {_id: mongo.ObjectID(id) }, function (canciones) {
+        {_id: mongo.ObjectID(id)}, function (canciones) {
             console.log(canciones[0]);
-            if(canciones[0].autor == req.session.usuario ){
+            if (canciones[0].autor == req.session.usuario) {
                 next();
             } else {
                 res.redirect("/tienda");
@@ -116,27 +120,27 @@ routerUsuarioAutor.use(function(req, res, next) {
 });
 
 //Aplicar routerUsuarioAutor
-app.use("/cancion/modificar",routerUsuarioAutor);
-app.use("/cancion/eliminar",routerUsuarioAutor);
+app.use("/cancion/modificar", routerUsuarioAutor);
+app.use("/cancion/eliminar", routerUsuarioAutor);
 
 //routerAudios
 let routerAudios = express.Router();
-routerAudios.use(function(req, res, next) {
+routerAudios.use(function (req, res, next) {
     console.log("routerAudios");
     let path = require('path');
     let idCancion = path.basename(req.originalUrl, '.mp3');
     gestorBD.obtenerCanciones(
-        {"_id": mongo.ObjectID(idCancion) }, function (canciones) {
-            if(req.session.usuario && canciones[0].autor == req.session.usuario ){
+        {"_id": mongo.ObjectID(idCancion)}, function (canciones) {
+            if (req.session.usuario && canciones[0].autor == req.session.usuario) {
                 next();
             } else {
                 // res.redirect("/tienda");
                 let criterio = {
-                    usuario : req.session.usuario,
-                    cancionId : mongo.ObjectID(idCancion)
+                    usuario: req.session.usuario,
+                    cancionId: mongo.ObjectID(idCancion)
                 };
-                gestorBD.obtenerCompras(criterio ,function(compras){
-                    if (compras != null && compras.length > 0 ){
+                gestorBD.obtenerCompras(criterio, function (compras) {
+                    if (compras != null && compras.length > 0) {
                         next();
                     } else {
                         res.redirect("/tienda");
@@ -146,7 +150,7 @@ routerAudios.use(function(req, res, next) {
         })
 });
 //Aplicar routerAudios
-app.use("/audios/",routerAudios);
+app.use("/audios/", routerAudios);
 
 app.use(express.static('public'));
 
@@ -163,8 +167,8 @@ app.set('db', 'mongodb://admin:sdi@tiendamusica-shard-00-00.any5v.mongodb.net:27
     '&authSource=admin' +
     '&retryWrites=true' +
     '&w=majority');
-app.set('clave','abcdefg');
-app.set('crypto',crypto);
+app.set('clave', 'abcdefg');
+app.set('crypto', crypto);
 
 //Rutas/controladores por lógica
 require("./routes/rusuarios.js")(app, swig, gestorBD); // (app, param1, param2, etc.)
@@ -176,9 +180,9 @@ require("./routes/rapicanciones.js")(app, gestorBD);
 app.get('/', function (req, res) {
     res.redirect('/tienda');
 });
-app.use( function (err, req, res, next ){
+app.use(function (err, req, res, next) {
     console.log("Error producido: " + err); //mostramos el error en consola
-    if(! res.headersSent){
+    if (!res.headersSent) {
         res.status(400);
         // res.send("Recurso no disponible");
         let respuesta = swig.renderFile('views/error.html',
@@ -189,7 +193,7 @@ app.use( function (err, req, res, next ){
 
     }
 
-    });
+});
 // Lanzar el servidor
 // app.listen(app.get('port'), function () {
 //     console.log('Servidor activo');
@@ -197,6 +201,6 @@ app.use( function (err, req, res, next ){
 https.createServer({
     key: fs.readFileSync('certificates/alice.key'),
     cert: fs.readFileSync('certificates/alice.crt')
-}, app).listen(app.get('port'), function() {
+}, app).listen(app.get('port'), function () {
     console.log("Servidor activo");
 });

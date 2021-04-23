@@ -192,51 +192,90 @@ module.exports = function (app, swig, gestorBD) {
 
 
     app.get('/cancion/:id', function (req, res) {
-        if (req.session.usuario == null) {
-            res.redirect("/identificarse");
-            return;
-        }
 
 
-        let cancionesCompradas = [];
-        let comprada = false;
-        let comentarios = [];
-
-        let criterioIdCancion = {"_id": gestorBD.mongo.ObjectID(req.params.id)};
-        let criterioIdCancionComentarios = {"cancion_id": gestorBD.mongo.ObjectID(req.params.id)};
-        let criterioUsuario = {"usuario": req.session.usuario, "cancion_id": gestorBD.mongo.ObjectID(req.params.id)};
-
-        //obtengo la cancion
-        //obtengo los comentarios de la cancion
-        //obtengo las canciones compradas
-
-        gestorBD.obtenerCanciones(criterioIdCancion, function (pCancion) {
-            if (pCancion == null) {
-                let msgErr = "Error al recuperar la cancion.";
-                // res.send(msgErr);
-                error(res,swig,msgErr)
+        let criterio = {"_id": gestorBD.mongo.ObjectID(req.params.id)};
+        gestorBD.obtenerCanciones(criterio, function (canciones) {
+            if (canciones == null) {
+                res.send(respuesta);
             } else {
-                gestorBD.obtenerListadoComentariosCancion(criterioIdCancionComentarios, function (pComentarios) {
-                        gestorBD.obtenerCompras(criterioUsuario, function (compras) {
-                                comprada = compras[0] != null;
-
-                                console.log(pCancion);
-                                console.log(comprada);
-
-                                let respuesta = swig.renderFile('views/bcancion.html',
-                                    {
-                                        cancion: pCancion[0],
-                                        comentarios: pComentarios,
-                                        comprada: comprada
-                                    });
-                                res.send(respuesta);
-                            }
-                        );
-
+                let configuracion = {
+                    url: "https://www.freeforexapi.com/api/live?pairs=EURUSD",
+                    method: "get",
+                    headers: {
+                        "token": "ejemplo",
                     }
-                );
+                }
+                let rest = app.get("rest");
+                rest(configuracion, function (error, response, body) {
+                    console.log("cod: " + response.statusCode + " Cuerpo :" + body);
+                    let objetoRespuesta = JSON.parse(body);
+                    let cambioUSD = objetoRespuesta.rates.EURUSD.rate;
+// nuevo campo "usd"
+                    canciones[0].usd = cambioUSD * canciones[0].precio;
+                    let respuesta = swig.renderFile('views/bcancion.html',
+                        {
+                            cancion: canciones[0]
+                        });
+                    res.send(respuesta);
+                })
+                let respuesta = swig.renderFile('views/bcancion.html',
+                    {
+                        cancion : canciones[0]
+                    });
             }
         });
+
+
+        //--------------------------------complementerios anteriores adaptar-----------------------------------------
+        //--------------------------------------------------------------------------------
+        // if (req.session.usuario == null) {
+        //     res.redirect("/identificarse");
+        //     return;
+        // }
+        //
+        //
+        // let cancionesCompradas = [];
+        // let comprada = false;
+        // let comentarios = [];
+        //
+        // let criterioIdCancion = {"_id": gestorBD.mongo.ObjectID(req.params.id)};
+        // let criterioIdCancionComentarios = {"cancion_id": gestorBD.mongo.ObjectID(req.params.id)};
+        // let criterioUsuario = {"usuario": req.session.usuario, "cancion_id": gestorBD.mongo.ObjectID(req.params.id)};
+        //
+        // //obtengo la cancion
+        // //obtengo los comentarios de la cancion
+        // //obtengo las canciones compradas
+        //
+        // gestorBD.obtenerCanciones(criterioIdCancion, function (pCancion) {
+        //     if (pCancion == null) {
+        //         let msgErr = "Error al recuperar la cancion.";
+        //         // res.send(msgErr);
+        //         error(res,swig,msgErr)
+        //     } else {
+        //         gestorBD.obtenerListadoComentariosCancion(criterioIdCancionComentarios, function (pComentarios) {
+        //                 gestorBD.obtenerCompras(criterioUsuario, function (compras) {
+        //                         comprada = compras[0] != null;
+        //
+        //                         console.log(pCancion);
+        //                         console.log(comprada);
+        //
+        //                         let respuesta = swig.renderFile('views/bcancion.html',
+        //                             {
+        //                                 cancion: pCancion[0],
+        //                                 comentarios: pComentarios,
+        //                                 comprada: comprada
+        //                             });
+        //                         res.send(respuesta);
+        //                     }
+        //                 );
+        //
+        //             }
+        //         );
+        //     }
+        // });
+        //--------------------------------------------------------------------------------
+
         // let criterio = {"_id": gestorBD.mongo.ObjectID(req.params.id)};
         // gestorBD.obtenerCanciones(criterio, function (canciones) {
         //     if (canciones == null) {
