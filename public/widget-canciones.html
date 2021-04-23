@@ -6,14 +6,16 @@
 </head>
 <body>
 <div id="widget-canciones">
+    <input type="text" class="form-control" placeholder="Filtrar por nombre"
+           id="filtro-nombre"/>
     <button class="btn btn-primary" onclick="widgetAgregar()">Nueva Canción</button>
     <button class="btn" onclick="cargarCanciones()">Actualizar</button>
     <table class="table table-hover">
         <thead>
         <tr>
-            <th>Nombre</th>
+            <th><a onclick="ordenarPorNombre()">Nombre</a></th>
             <th>Genero</th>
-            <th>Precio</th>
+            <th><a onclick="ordenarPorPrecio()">Precio</a></th>
             <th class="col-md-1"></th>
         </tr>
         </thead>
@@ -23,6 +25,7 @@
 </div>
 </body>
 <script>
+    window.history.pushState("", "", "/cliente.html?w=canciones");
     var canciones;
 
     function cargarCanciones() {
@@ -59,27 +62,28 @@
 //la id tiene que ir entre comillas ' '
         }
     }
+
     cargarCanciones();
 
     //Si quisiéramos que las canciones se actualizasen de forma automática cada N segundos (de
     // forma similar a los clientes de correo electrónico) podríamos incluir un setInternval.
-    setInterval(function() {
-        cargarCanciones();
-    }, 5000);
+    // setInterval(function() {
+    //     cargarCanciones();
+    // }, 5000);
 
-    function eliminar( _id ) {
+    function eliminar(_id) {
         $.ajax({
-            url: URLbase + "/cancion/"+_id,
+            url: URLbase + "/cancion/" + _id,
             type: "DELETE",
-            data: { },
+            data: {},
             dataType: 'json',
-            headers: { "token": token },
-            success: function(respuesta) {
-                console.log("Eliminada: "+_id);
-                $( "#"+_id ).remove(); // eliminar el <tr> de la canción
+            headers: {"token": token},
+            success: function (respuesta) {
+                console.log("Eliminada: " + _id);
+                $("#" + _id).remove(); // eliminar el <tr> de la canción
             },
-            error : function (error){
-                $( "#contenedor-principal" ).load("widget-login.html");
+            error: function (error) {
+                $("#contenedor-principal").load("widget-login.html");
             }
         });
     }
@@ -88,11 +92,54 @@
 
     function detalles(_id) {
         idCancionSeleccionada = _id;
-        $( "#contenedor-principal" ).load( "widget-detalles.html");
+        $("#contenedor-principal").load("widget-detalles.html");
     }
 
     function widgetAgregar() {
-        $( "#contenedor-principal" ).load( "widget-agregar.html");
+        $("#contenedor-principal").load("widget-agregar.html");
+    }
+
+    $('#filtro-nombre').on('input', function (e) {
+        var cancionesFiltradas = [];
+        var nombreFiltro = $("#filtro-nombre").val();
+        for (i = 0; i < canciones.length; i++) {
+            if (canciones[i].nombre.indexOf(nombreFiltro) != -1) {
+                cancionesFiltradas.push(canciones[i]);
+            }
+        }
+        actualizarTabla(cancionesFiltradas);
+    });
+    var precioDsc = true;
+
+    function ordenarPorPrecio() {
+        if (precioDsc) {
+            canciones.sort(function (a, b) {
+                return parseFloat(a.precio) - parseFloat(b.precio);
+            });
+        } else {
+            canciones.sort(function (a, b) {
+                return parseFloat(b.precio) - parseFloat(a.precio);
+            });
+        }
+        actualizarTabla(canciones);
+        precioDsc = !precioDsc; //invertir
+
+//         canciones.sort(function(a, b) {
+//             if (parseFloat(a.precio) > parseFloat(b.precio)) return -1;
+//             if (parseFloat(a.precio) < parseFloat(b.precio)) return 1;
+//             return 0
+// // Dependiendo de retorno >0 =0 o <0
+//         });
+//         actualizarTabla(canciones);
+    }
+
+    function ordenarPorNombre() {
+        canciones.sort(function (a, b) {
+            if (a.nombre > b.nombre) return 1;
+            if (a.nombre < b.nombre) return -1;
+            return 0;
+        });
+        actualizarTabla(canciones);
     }
 </script>
 }
